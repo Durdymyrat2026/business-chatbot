@@ -77,7 +77,37 @@ function escapeXml(s) {
   return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function makeLogo(name, industry, color, watermark) {
+function wmLogo() {
+  return `<g opacity="0.4">
+    <text transform="rotate(-18 200 80)" x="200" y="76" font-family="Arial, sans-serif" font-weight="800" font-size="26" fill="#ff5c8a" text-anchor="middle">NUSGA · PREVIEW</text>
+    <text transform="rotate(-18 200 80)" x="200" y="100" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#0b0d12" text-anchor="middle">TÖLEG SOŇUNDAN DOLY NUSGA</text>
+  </g>`;
+}
+
+function wmCard() {
+  return `<g opacity="0.45">
+    <text transform="rotate(-20 42 28)" x="42" y="26" font-family="Arial, sans-serif" font-weight="800" font-size="6" fill="#ff5c8a" text-anchor="middle">NUSGA</text>
+    <text transform="rotate(-20 42 28)" x="42" y="33" font-family="Arial, sans-serif" font-weight="700" font-size="2.2" fill="#ffffff" text-anchor="middle">PREVIEW</text>
+  </g>`;
+}
+
+const LOGO_STYLES = {
+  monogram: "Monogram",
+  minimal: "Minimal",
+  badge: "Badge",
+  boxed: "Boxed",
+  line: "Line",
+};
+
+const CARD_STYLES = {
+  dark: "Gara",
+  gradient: "Gradient",
+  light: "Açyk",
+  split: "Bölünən",
+  frame: "Çerçiwe",
+};
+
+function makeLogo(name, industry, color, watermark, style) {
   const pal = PALETTES[color] || PALETTES["Fiolet"];
   const init = escapeXml(name.trim().slice(0, 2).toUpperCase());
   const subtitle = escapeXml(INDUSTRIES[industry] || "SANLY HYMATLAR");
@@ -85,24 +115,52 @@ function makeLogo(name, industry, color, watermark) {
   const grad =
     `<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
     `<stop offset="0" stop-color="${pal.a}"/><stop offset="1" stop-color="${pal.b}"/></linearGradient>`;
-  const wm = watermark
-    ? `<g opacity="0.4">
-    <text transform="rotate(-18 200 80)" x="200" y="76" font-family="Arial, sans-serif" font-weight="800" font-size="26" fill="#ff5c8a" text-anchor="middle">NUSGA · PREVIEW</text>
-    <text transform="rotate(-18 200 80)" x="200" y="100" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#0b0d12" text-anchor="middle">TÖLEG SOŇUNDAN DOLY NUSGA</text>
-  </g>`
-    : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" width="800" height="320">
-  <defs>${grad}</defs>
-  <rect x="8" y="24" width="112" height="112" rx="26" fill="url(#g)"/>
+  const wm = watermark ? wmLogo() : "";
+
+  let body;
+  switch (style) {
+    case "minimal":
+      body = `<text x="200" y="90" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="52" fill="#0b0d12" text-anchor="middle">${gname}</text>
+  <rect x="160" y="102" width="80" height="6" rx="3" fill="url(#g)"/>
+  <text x="200" y="128" font-family="Arial, sans-serif" font-weight="500" font-size="15" fill="#8a93a8" letter-spacing="3" text-anchor="middle">${subtitle}</text>`;
+      break;
+    case "badge":
+      body = `<circle cx="64" cy="80" r="50" fill="url(#g)"/>
+  <circle cx="64" cy="80" r="56" fill="none" stroke="url(#g)" stroke-width="3"/>
+  <text x="64" y="92" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="44" fill="#ffffff" text-anchor="middle">${init}</text>
+  <text x="140" y="86" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="46" fill="#0b0d12">${gname}</text>
+  <text x="140" y="112" font-family="Arial, sans-serif" font-weight="500" font-size="15" fill="#8a93a8" letter-spacing="2">${subtitle}</text>
+  <circle cx="140" cy="122" r="4" fill="url(#g)"/>`;
+      break;
+    case "boxed":
+      body = `<rect x="8" y="30" width="384" height="100" rx="20" fill="#0b0d12"/>
+  <rect x="8" y="30" width="384" height="100" rx="20" fill="none" stroke="url(#g)" stroke-width="3"/>
+  <text x="200" y="78" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="42" fill="#ffffff" text-anchor="middle">${gname}</text>
+  <rect x="160" y="90" width="80" height="5" rx="2.5" fill="url(#g)"/>
+  <text x="200" y="114" font-family="Arial, sans-serif" font-weight="500" font-size="14" fill="#9aa5bb" letter-spacing="2" text-anchor="middle">${subtitle}</text>`;
+      break;
+    case "line":
+      body = `<line x1="10" y1="42" x2="390" y2="42" stroke="url(#g)" stroke-width="4"/>
+  <text x="200" y="94" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="50" fill="#0b0d12" text-anchor="middle">${gname}</text>
+  <text x="200" y="118" font-family="Arial, sans-serif" font-weight="500" font-size="15" fill="#8a93a8" letter-spacing="3" text-anchor="middle">${subtitle}</text>
+  <line x1="10" y1="130" x2="390" y2="130" stroke="url(#g)" stroke-width="4"/>`;
+      break;
+    default:
+      body = `<rect x="8" y="24" width="112" height="112" rx="26" fill="url(#g)"/>
   <text x="64" y="108" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="58" fill="#ffffff" text-anchor="middle">${init}</text>
   <text x="140" y="95" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="44" fill="#0b0d12">${gname}</text>
   <rect x="140" y="106" width="26" height="5" rx="2.5" fill="url(#g)"/>
-  <text x="140" y="130" font-family="Arial, sans-serif" font-weight="500" font-size="15" fill="#8a93a8" letter-spacing="2">${subtitle}</text>
+  <text x="140" y="130" font-family="Arial, sans-serif" font-weight="500" font-size="15" fill="#8a93a8" letter-spacing="2">${subtitle}</text>`;
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" width="800" height="320">
+  <defs>${grad}</defs>
+  ${body}
   ${wm}
 </svg>`;
 }
 
-function makeCard(name, industry, color, contact, watermark) {
+function makeCard(name, industry, color, contact, watermark, style) {
   const pal = PALETTES[color] || PALETTES["Fiolet"];
   const init = escapeXml(name.trim().slice(0, 1).toUpperCase());
   const subtitle = escapeXml(INDUSTRIES[industry] || "SANLY HYMATLAR");
@@ -111,15 +169,45 @@ function makeCard(name, industry, color, contact, watermark) {
   const grad =
     `<linearGradient id="c" x1="0" y1="0" x2="1" y2="1">` +
     `<stop offset="0" stop-color="${pal.a}"/><stop offset="1" stop-color="${pal.b}"/></linearGradient>`;
-  const wm = watermark
-    ? `<g opacity="0.45">
-    <text transform="rotate(-20 42 28)" x="42" y="26" font-family="Arial, sans-serif" font-weight="800" font-size="6" fill="#ff5c8a" text-anchor="middle">NUSGA</text>
-    <text transform="rotate(-20 42 28)" x="42" y="33" font-family="Arial, sans-serif" font-weight="700" font-size="2.2" fill="#ffffff" text-anchor="middle">PREVIEW</text>
-  </g>`
-    : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 85 55" width="850" height="550">
-  <defs>${grad}</defs>
-  <rect width="85" height="55" fill="#0b0d12"/>
+  const wm = watermark ? wmCard() : "";
+
+  let body;
+  switch (style) {
+    case "gradient":
+      body = `<rect width="85" height="55" fill="url(#c)"/>
+  <text x="42.5" y="22" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="13" fill="#ffffff" text-anchor="middle">${gname}</text>
+  <text x="42.5" y="28" font-family="Arial, sans-serif" font-weight="500" font-size="2.4" fill="rgba(255,255,255,.85)" letter-spacing="0.5" text-anchor="middle">${subtitle}</text>
+  <rect x="20" y="34" width="45" height="0.8" fill="rgba(255,255,255,.5)"/>
+  <text x="42.5" y="46" font-family="Arial, sans-serif" font-size="3" fill="#ffffff" text-anchor="middle">${gcontact}</text>`;
+      break;
+    case "light":
+      body = `<rect width="85" height="55" fill="#ffffff"/>
+  <rect x="0" y="0" width="2.4" height="55" fill="url(#c)"/>
+  <text x="5" y="20" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="12" fill="#0b0d12">${gname}</text>
+  <text x="5" y="25.5" font-family="Arial, sans-serif" font-weight="500" font-size="2.4" fill="#8a93a8" letter-spacing="0.5">${subtitle}</text>
+  <line x1="5" y1="40" x2="80" y2="40" stroke="#e4e7ef" stroke-width="0.3"/>
+  <text x="5" y="46" font-family="Arial, sans-serif" font-size="3" fill="#0b0d12">${gcontact}</text>
+  <text x="80" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#c3c9d6" text-anchor="end">BIRDE. ORDER</text>`;
+      break;
+    case "split":
+      body = `<rect width="85" height="55" fill="#0b0d12"/>
+  <rect width="85" height="26" fill="url(#c)"/>
+  <text x="42.5" y="18" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="11" fill="#ffffff" text-anchor="middle">${gname}</text>
+  <text x="42.5" y="23.5" font-family="Arial, sans-serif" font-weight="500" font-size="2.2" fill="rgba(255,255,255,.85)" letter-spacing="0.5" text-anchor="middle">${subtitle}</text>
+  <line x1="5" y1="34" x2="80" y2="34" stroke="#262e40" stroke-width="0.3"/>
+  <text x="5" y="46" font-family="Arial, sans-serif" font-size="3" fill="#eef1f8">${gcontact}</text>
+  <text x="80" y="50" font-family="Arial, sans-serif" font-size="1.8" fill="#9aa5bb" text-anchor="end">BIRDE. ORDER</text>`;
+      break;
+    case "frame":
+      body = `<rect width="85" height="55" fill="#0b0d12"/>
+  <rect x="1.5" y="1.5" width="82" height="52" rx="6" fill="none" stroke="url(#c)" stroke-width="1.2"/>
+  <text x="42.5" y="24" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="12" fill="#ffffff" text-anchor="middle">${gname}</text>
+  <text x="42.5" y="30" font-family="Arial, sans-serif" font-weight="500" font-size="2.4" fill="#9aa5bb" letter-spacing="0.5" text-anchor="middle">${subtitle}</text>
+  <line x1="20" y1="36" x2="65" y2="36" stroke="#262e40" stroke-width="0.3"/>
+  <text x="42.5" y="46" font-family="Arial, sans-serif" font-size="3" fill="#ffffff" text-anchor="middle">${gcontact}</text>`;
+      break;
+    default:
+      body = `<rect width="85" height="55" fill="#0b0d12"/>
   <rect x="0" y="0" width="2.4" height="55" fill="url(#c)"/>
   <rect x="5" y="5" width="9" height="9" rx="2.5" fill="url(#c)"/>
   <text x="9.5" y="12.5" font-family="Arial, sans-serif" font-weight="900" font-size="7" fill="#ffffff" text-anchor="middle">${init}</text>
@@ -127,7 +215,12 @@ function makeCard(name, industry, color, contact, watermark) {
   <text x="5" y="35.5" font-family="Arial, sans-serif" font-weight="500" font-size="2.4" fill="#9aa5bb" letter-spacing="0.5">${subtitle}</text>
   <line x1="5" y1="40" x2="80" y2="40" stroke="#262e40" stroke-width="0.3"/>
   <text x="5" y="46" font-family="Arial, sans-serif" font-size="3" fill="#eef1f8">${gcontact}</text>
-  <text x="80" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#9aa5bb" text-anchor="end">BIRDE. ORDER</text>
+  <text x="80" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#9aa5bb" text-anchor="end">BIRDE. ORDER</text>`;
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 85 55" width="850" height="550">
+  <defs>${grad}</defs>
+  ${body}
   ${wm}
 </svg>`;
 }
@@ -281,7 +374,7 @@ img{max-width:280px;display:block;margin-top:4px}
 <button type="submit">Gör</button></form>
 <div id="out" style="color:#ef4444"></div>
 <table style="display:none" id="t"><thead><tr>
-<th>Zakaz #</th><th>Firma</th><th>Ugur</th><th>Reňk</th><th>Kontakt</th><th>Hyzmat</th><th>Bellik</th><th>Sene</th><th>Loga</th><th>Wizitka</th></tr></thead><tbody id="rows"></tbody></table>
+<th>Zakaz #</th><th>Firma</th><th>Ugur</th><th>Reňk</th><th>Stil</th><th>Kontakt</th><th>Hyzmat</th><th>Bellik</th><th>Sene</th><th>Loga</th><th>Wizitka</th></tr></thead><tbody id="rows"></tbody></table>
 </div>
 <script>
 document.getElementById('f').addEventListener('submit', async (e) => {
@@ -298,7 +391,7 @@ document.getElementById('f').addEventListener('submit', async (e) => {
     const d = new Date(o.created).toLocaleString('tk');
     const e = encodeURIComponent(p);
     return '<tr><td>#'+(i+1)+'</td><td>'+o.business_name+'</td><td>'+o.industry+'</td><td>'+o.color+'</td>'+
-      '<td>'+o.contact+'</td><td>'+o.service+'</td><td>'+(o.notes||'')+'</td><td>'+d+'</td>'+
+      '<td>'+o.style+'</td><td>'+o.contact+'</td><td>'+o.service+'</td><td>'+(o.notes||'')+'</td><td>'+d+'</td>'+
       '<td><a href="/api/design/'+o.id+'/logo" target="_blank">Nusga</a><br><a href="/api/full/'+o.id+'/logo?p='+e+'" target="_blank">Doly indir</a></td>'+
       '<td><a href="/api/design/'+o.id+'/card" target="_blank">Nusga</a><br><a href="/api/full/'+o.id+'/card?p='+e+'" target="_blank">Doly indir</a></td></tr>';
   });
@@ -363,6 +456,7 @@ const server = http.createServer(async (req, res) => {
     }
     const industry = safe(payload.industry, 30) || "Beýleki";
     const color = safe(payload.color, 30) || "Fiolet";
+    const style = safe(payload.style, 30) || "monogram";
     const contact = safe(payload.contact, 60);
     const service = safe(payload.service, 40) || "Logo + Wizitka";
     const notes = safe(payload.notes, 200);
@@ -374,13 +468,14 @@ const server = http.createServer(async (req, res) => {
       business_name,
       industry,
       color,
+      style,
       contact,
       service,
       notes,
-      logo_preview_svg: makeLogo(business_name, industry, color, true),
-      logo_full_svg: makeLogo(business_name, industry, color, false),
-      card_preview_svg: makeCard(business_name, industry, color, contact, true),
-      card_full_svg: makeCard(business_name, industry, color, contact, false),
+      logo_preview_svg: makeLogo(business_name, industry, color, true, style),
+      logo_full_svg: makeLogo(business_name, industry, color, false, style),
+      card_preview_svg: makeCard(business_name, industry, color, contact, true, style),
+      card_full_svg: makeCard(business_name, industry, color, contact, false, style),
     };
 
     const orders = loadOrders();
@@ -447,6 +542,7 @@ const server = http.createServer(async (req, res) => {
       business_name: o.business_name,
       industry: o.industry,
       color: o.color,
+      style: o.style || "",
       contact: o.contact,
       service: o.service,
       notes: o.notes,

@@ -301,7 +301,22 @@
   /* ---- order form ---- */
   const overlay = document.getElementById('orderOverlay');
   const orderStep = document.getElementById('orderStep');
-  const order = { business_name: '', industry: 'Telekeçilik', color: 'Fiolet', service: 'Logo + Wizitka', contact: '', notes: '' };
+  const COLORS = [
+    { k: 'Fiolet', c: '#7c5cff' },
+    { k: 'Mawi', c: '#3b82f6' },
+    { k: 'Gök', c: '#06b6d4' },
+    { k: 'Gyzyl', c: '#ef4444' },
+    { k: 'Ýaşyl', c: '#10b981' },
+    { k: 'Gara-ak', c: '#1f2937' },
+  ];
+  const STYLES = [
+    { k: 'monogram', t: 'Monogram' },
+    { k: 'minimal', t: 'Minimal' },
+    { k: 'badge', t: 'Badge' },
+    { k: 'boxed', t: 'Boxed' },
+    { k: 'line', t: 'Line' },
+  ];
+  const order = { business_name: '', industry: 'Telekeçilik', color: 'Fiolet', style: 'monogram', service: 'Logo + Wizitka', contact: '', notes: '' };
 
   const INDUSTRIES = ['Telekeçilik', 'Senagat', 'Logistika', 'Saglyk', 'Iýmit', 'Gurluşyk', 'Beýleki'];
   const COLORS = [
@@ -329,9 +344,11 @@
       '<div class="chips">' + INDUSTRIES.map(i => '<button type="button" class="chip' + (order.industry === i ? ' sel' : '') + '" onclick="setIndustry(\'' + i + '\')">' + i + '</button>').join('') + '</div>' +
       '<label>3. Reňk</label>' +
       '<div class="chips">' + COLORS.map(c => '<button type="button" class="chip' + (order.color === c.k ? ' sel' : '') + '" onclick="setColor(\'' + c.k + '\')"><span class="sw" style="background:' + c.c + '"></span>' + c.k + '</button>').join('') + '</div>' +
-      '<label>4. Hyzmat</label>' +
+      '<label>4. Dizaýn stili</label>' +
+      '<div class="chips">' + STYLES.map(s => '<button type="button" class="chip' + (order.style === s.k ? ' sel' : '') + '" onclick="setStyle(\'' + s.k + '\')">' + s.t + '</button>').join('') + '</div>' +
+      '<label>5. Hyzmat</label>' +
       '<select id="oService">' + ['Logo + Wizitka', 'Diňe Logo', 'Diňe Wizitka', 'Doly brend paket'].map(s => '<option' + (order.service === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' +
-      '<label>5. Kontakt (telefon ýa-da email) *</label>' +
+      '<label>6. Kontakt (telefon ýa-da email) *</label>' +
       '<input id="oContact" placeholder="+993 6X XXX XX XX" value="' + order.contact + '">' +
       '<label>Bellik (isleýän zatlaryňyz)</label>' +
       '<textarea id="oNotes" placeholder="Meselem: gara reňk, rus dilinde...">' + order.notes + '</textarea>' +
@@ -340,6 +357,7 @@
 
   function setIndustry(i) { order.industry = i; renderForm(); }
   function setColor(c) { order.color = c; renderForm(); }
+  function setStyle(s) { order.style = s; renderForm(); }
 
   async function submitOrder() {
     order.business_name = document.getElementById('oName').value.trim();
