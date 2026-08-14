@@ -236,9 +236,6 @@
 
 <div class="overlay" id="orderOverlay">
   <div class="modal" id="orderModal">
-    <div class="step-dots" id="dots">
-      <i class="on"></i><i></i><i></i><i></i>
-    </div>
     <div id="orderStep"></div>
   </div>
 </div>
@@ -301,13 +298,10 @@
   }
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
 
-  /* ---- order wizard ---- */
+  /* ---- order form ---- */
   const overlay = document.getElementById('orderOverlay');
   const orderStep = document.getElementById('orderStep');
-  const dots = document.getElementById('dots').children;
   const order = { business_name: '', industry: 'Telekeçilik', color: 'Fiolet', service: 'Logo + Wizitka', contact: '', notes: '' };
-  const stepCount = 4;
-  let step = 1;
 
   const INDUSTRIES = ['Telekeçilik', 'Senagat', 'Logistika', 'Saglyk', 'Iýmit', 'Gurluşyk', 'Beýleki'];
   const COLORS = [
@@ -319,66 +313,42 @@
     { k: 'Gara-ak', c: '#1f2937' },
   ];
 
-  function openOrder() { overlay.classList.add('open'); step = 1; renderStep(); }
+  function openOrder() {
+    overlay.classList.add('open');
+    renderForm();
+  }
   function closeOrder() { overlay.classList.remove('open'); }
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOrder(); });
 
-  function setDots() {
-    for (let i = 0; i < stepCount; i++) dots[i].classList.toggle('on', i < step);
-  }
-  function renderStep() {
-    setDots();
-    const can = step > 1, back = step < stepCount;
-    let html = '';
-    if (step === 1) {
-      html = '<h3>Zakaz beriň</h3>' +
-        '<label>1. Firma ady *</label>' +
-        '<input id="oName" placeholder="Meselem: Aşgabat Motors" value="' + order.business_name + '">';
-    } else if (step === 2) {
-      html = '<h3>Ugruňyzy saýlaň</h3>' +
-        '<div class="chips">' + INDUSTRIES.map(i => '<button class="chip' + (order.industry === i ? ' sel' : '') + '" onclick="setIndustry(\'' + i + '\')">' + i + '</button>').join('') + '</div>' +
-        '<label>Reňk gowy görýäňiz</label>' +
-        '<div class="chips">' + COLORS.map(c => '<button class="chip' + (order.color === c.k ? ' sel' : '') + '" onclick="setColor(\'' + c.k + '\')"><span class="sw" style="background:' + c.c + '"></span>' + c.k + '</button>').join('') + '</div>';
-    } else if (step === 3) {
-      html = '<h3>Hyzmaty saýlaň</h3>' +
-        '<label>Hyzmat</label>' +
-        '<select id="oService">' + ['Logo + Wizitka', 'Diňe Logo', 'Diňe Wizitka', 'Doly brend paket'].map(s => '<option' + (order.service === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' +
-        '<label>Kontakt (telefon ýa-da email) *</label>' +
-        '<input id="oContact" placeholder="+993 6X XXX XX XX" value="' + order.contact + '">' +
-        '<label>Bellik (isleýän zatlaryňyz)</label>' +
-        '<textarea id="oNotes" placeholder="Meselem: gara reňk, rus dilinde...">' + order.notes + '</textarea>';
-    } else {
-      html = '<h3>Tassyklamak</h3>' +
-        '<p style="color:var(--muted);font-size:14px">Firma: <b>' + order.business_name + '</b><br>Ugur: ' + order.industry + '<br>Reňk: ' + order.color +
-        '<br>Hyzmat: ' + order.service + '<br>Kontakt: ' + order.contact + '</p>' +
-        (order.notes ? '<p style="color:var(--muted);font-size:13px">Bellik: ' + order.notes + '</p>' : '');
-    }
-    orderStep.innerHTML = html +
-      '<div class="actions">' +
-      (back ? '<button class="btn ghost" onclick="prevStep()">Yza</button>' : '') +
-      '<button class="btn' + (can ? '' : ' disabled') + '" onclick="nextStep()">' + (step === stepCount ? 'Ugrat' : 'Dowam') + '</button>' +
-      '</div>';
+  function renderForm() {
+    orderStep.innerHTML =
+      '<h3>Zakaz beriň</h3>' +
+      '<label>1. Firma ady *</label>' +
+      '<input id="oName" placeholder="Meselem: Aşgabat Motors" value="' + order.business_name + '">' +
+      '<label>2. Ugur</label>' +
+      '<div class="chips">' + INDUSTRIES.map(i => '<button type="button" class="chip' + (order.industry === i ? ' sel' : '') + '" onclick="setIndustry(\'' + i + '\')">' + i + '</button>').join('') + '</div>' +
+      '<label>3. Reňk</label>' +
+      '<div class="chips">' + COLORS.map(c => '<button type="button" class="chip' + (order.color === c.k ? ' sel' : '') + '" onclick="setColor(\'' + c.k + '\')"><span class="sw" style="background:' + c.c + '"></span>' + c.k + '</button>').join('') + '</div>' +
+      '<label>4. Hyzmat</label>' +
+      '<select id="oService">' + ['Logo + Wizitka', 'Diňe Logo', 'Diňe Wizitka', 'Doly brend paket'].map(s => '<option' + (order.service === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' +
+      '<label>5. Kontakt (telefon ýa-da email) *</label>' +
+      '<input id="oContact" placeholder="+993 6X XXX XX XX" value="' + order.contact + '">' +
+      '<label>Bellik (isleýän zatlaryňyz)</label>' +
+      '<textarea id="oNotes" placeholder="Meselem: gara reňk, rus dilinde...">' + order.notes + '</textarea>' +
+      '<div class="actions"><button class="btn" onclick="submitOrder()">Zakaz ugrat</button></div>';
   }
 
-  function nextStep() {
-    if (step === 1) {
-      order.business_name = document.getElementById('oName').value.trim();
-      if (!order.business_name) { alert('Firma adyňyzy ýazyň'); return; }
-    }
-    if (step === 3) {
-      order.service = document.getElementById('oService').value;
-      order.contact = document.getElementById('oContact').value.trim();
-      order.notes = document.getElementById('oNotes').value.trim();
-      if (!order.contact) { alert('Kontaktyňyzy ýazyň'); return; }
-    }
-    if (step === stepCount) { submitOrder(); return; }
-    step++; renderStep();
-  }
-  function prevStep() { step--; renderStep(); }
-  function setIndustry(i) { order.industry = i; renderStep(); }
-  function setColor(c) { order.color = c; renderStep(); }
+  function setIndustry(i) { order.industry = i; renderForm(); }
+  function setColor(c) { order.color = c; renderForm(); }
 
   async function submitOrder() {
+    order.business_name = document.getElementById('oName').value.trim();
+    order.service = document.getElementById('oService').value;
+    order.contact = document.getElementById('oContact').value.trim();
+    order.notes = document.getElementById('oNotes').value.trim();
+    if (!order.business_name) { alert('Firma adyňyzy ýazyň'); return; }
+    if (!order.contact) { alert('Kontaktyňyzy ýazyň'); return; }
+
     orderStep.innerHTML = '<div class="result-box"><div class="ok-icon">⏳</div><p>Taýýarlanýar...</p></div>';
     try {
       const r = await fetch('/api/order', {
@@ -392,15 +362,14 @@
         '<div class="result-box"><div class="ok-icon">✅</div>' +
         '<h3>Zakaz ugradyldy!</h3>' +
         '<p style="color:var(--muted)">Zakaz #' + data.id + ' · Döwran aga tizara habarlaşar.</p>' +
-        '<p style="color:var(--muted);font-size:13px">Ilkinji teklip:</p>' +
+        '<p style="color:var(--muted);font-size:13px">Nusga (ilkinji teklip):</p>' +
         '<img src="' + data.logo_url + '" alt="Logo teklibi">' +
         '<img src="' + data.card_url + '" alt="Wizitka teklibi">' +
-        '<div><a class="link" href="' + data.logo_url + '" download>Logany indir</a>' +
-        '<a class="link" href="' + data.card_url + '" download>Wizitkany indir</a></div>' +
+        '<p style="color:#ff5c8a;font-size:13px;margin-top:10px">⚠️ Bu diňe nusga (suw alamatly). Doly, ýokary hilli faýl töleg edilenden soň berilýär.</p>' +
         '<div class="actions"><button class="btn ghost" onclick="closeOrder()">Ýap</button></div></div>';
     } catch (err) {
       orderStep.innerHTML = '<div class="result-box"><p style="color:#ff5c8a">' + err.message + '</p>' +
-        '<div class="actions"><button class="btn ghost" onclick="renderStep()">Yza</button></div></div>';
+        '<div class="actions"><button class="btn ghost" onclick="renderForm()">Yza</button></div></div>';
     }
   }
 

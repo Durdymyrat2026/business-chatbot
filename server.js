@@ -77,7 +77,7 @@ function escapeXml(s) {
   return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function makeLogo(name, industry, color) {
+function makeLogo(name, industry, color, watermark) {
   const pal = PALETTES[color] || PALETTES["Fiolet"];
   const init = escapeXml(name.trim().slice(0, 2).toUpperCase());
   const subtitle = escapeXml(INDUSTRIES[industry] || "SANLY HYMATLAR");
@@ -85,6 +85,12 @@ function makeLogo(name, industry, color) {
   const grad =
     `<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
     `<stop offset="0" stop-color="${pal.a}"/><stop offset="1" stop-color="${pal.b}"/></linearGradient>`;
+  const wm = watermark
+    ? `<g opacity="0.4">
+    <text transform="rotate(-18 200 80)" x="200" y="76" font-family="Arial, sans-serif" font-weight="800" font-size="26" fill="#ff5c8a" text-anchor="middle">NUSGA · PREVIEW</text>
+    <text transform="rotate(-18 200 80)" x="200" y="100" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#0b0d12" text-anchor="middle">TÖLEG SOŇUNDAN DOLY NUSGA</text>
+  </g>`
+    : "";
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 160" width="800" height="320">
   <defs>${grad}</defs>
   <rect x="8" y="24" width="112" height="112" rx="26" fill="url(#g)"/>
@@ -92,10 +98,11 @@ function makeLogo(name, industry, color) {
   <text x="140" y="95" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="44" fill="#0b0d12">${gname}</text>
   <rect x="140" y="106" width="26" height="5" rx="2.5" fill="url(#g)"/>
   <text x="140" y="130" font-family="Arial, sans-serif" font-weight="500" font-size="15" fill="#8a93a8" letter-spacing="2">${subtitle}</text>
+  ${wm}
 </svg>`;
 }
 
-function makeCard(name, industry, color, contact) {
+function makeCard(name, industry, color, contact, watermark) {
   const pal = PALETTES[color] || PALETTES["Fiolet"];
   const init = escapeXml(name.trim().slice(0, 1).toUpperCase());
   const subtitle = escapeXml(INDUSTRIES[industry] || "SANLY HYMATLAR");
@@ -104,6 +111,12 @@ function makeCard(name, industry, color, contact) {
   const grad =
     `<linearGradient id="c" x1="0" y1="0" x2="1" y2="1">` +
     `<stop offset="0" stop-color="${pal.a}"/><stop offset="1" stop-color="${pal.b}"/></linearGradient>`;
+  const wm = watermark
+    ? `<g opacity="0.45">
+    <text transform="rotate(-20 42 28)" x="42" y="26" font-family="Arial, sans-serif" font-weight="800" font-size="6" fill="#ff5c8a" text-anchor="middle">NUSGA</text>
+    <text transform="rotate(-20 42 28)" x="42" y="33" font-family="Arial, sans-serif" font-weight="700" font-size="2.2" fill="#ffffff" text-anchor="middle">PREVIEW</text>
+  </g>`
+    : "";
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 85 55" width="850" height="550">
   <defs>${grad}</defs>
   <rect width="85" height="55" fill="#0b0d12"/>
@@ -115,6 +128,7 @@ function makeCard(name, industry, color, contact) {
   <line x1="5" y1="40" x2="80" y2="40" stroke="#262e40" stroke-width="0.3"/>
   <text x="5" y="46" font-family="Arial, sans-serif" font-size="3" fill="#eef1f8">${gcontact}</text>
   <text x="80" y="9.5" font-family="Arial, sans-serif" font-size="1.8" fill="#9aa5bb" text-anchor="end">BIRDE. ORDER</text>
+  ${wm}
 </svg>`;
 }
 
@@ -282,12 +296,12 @@ document.getElementById('f').addEventListener('submit', async (e) => {
   t.style.display='table';
   document.getElementById('rows').innerHTML = data.map((o,i) => {
     const d = new Date(o.created).toLocaleString('tk');
+    const e = encodeURIComponent(p);
     return '<tr><td>#'+(i+1)+'</td><td>'+o.business_name+'</td><td>'+o.industry+'</td><td>'+o.color+'</td>'+
       '<td>'+o.contact+'</td><td>'+o.service+'</td><td>'+(o.notes||'')+'</td><td>'+d+'</td>'+
-      '<td><a href="/api/design/'+o.id+'/logo" target="_blank">Gör</a></td>'+
-      '<td><a href="/api/design/'+o.id+'/card" target="_blank">Gör</a></td></tr>';
-  }).join('');
-});
+      '<td><a href="/api/design/'+o.id+'/logo" target="_blank">Nusga</a><br><a href="/api/full/'+o.id+'/logo?p='+e+'" target="_blank">Doly indir</a></td>'+
+      '<td><a href="/api/design/'+o.id+'/card" target="_blank">Nusga</a><br><a href="/api/full/'+o.id+'/card?p='+e+'" target="_blank">Doly indir</a></td></tr>';
+  });
 </script></body></html>`;
 
 const server = http.createServer(async (req, res) => {
@@ -363,8 +377,10 @@ const server = http.createServer(async (req, res) => {
       contact,
       service,
       notes,
-      logo_svg: makeLogo(business_name, industry, color),
-      card_svg: makeCard(business_name, industry, color, contact),
+      logo_preview_svg: makeLogo(business_name, industry, color, true),
+      logo_full_svg: makeLogo(business_name, industry, color, false),
+      card_preview_svg: makeCard(business_name, industry, color, contact, true),
+      card_full_svg: makeCard(business_name, industry, color, contact, false),
     };
 
     const orders = loadOrders();
@@ -388,8 +404,33 @@ const server = http.createServer(async (req, res) => {
       res.end("Tapylmady");
       return;
     }
-    const svg = designMatch[2] === "logo" ? order.logo_svg : order.card_svg;
+    const svg =
+      designMatch[2] === "logo" ? order.logo_preview_svg : order.card_preview_svg;
     res.writeHead(200, { "Content-Type": "image/svg+xml" });
+    res.end(svg);
+    return;
+  }
+
+  const fullMatch = url.pathname.match(/^\/api\/full\/([a-f0-9]{6})\/(logo|card)$/);
+  if (fullMatch) {
+    const cfg = readConfig();
+    if (url.searchParams.get("p") !== cfg.admin_password) {
+      sendJson(res, 401, { error: "Nädogry parol" });
+      return;
+    }
+    const orders = loadOrders();
+    const order = orders.find((o) => o.id === fullMatch[1]);
+    if (!order) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Tapylmady");
+      return;
+    }
+    const svg =
+      fullMatch[2] === "logo" ? order.logo_full_svg : order.card_full_svg;
+    res.writeHead(200, {
+      "Content-Type": "image/svg+xml",
+      "Content-Disposition": `attachment; filename="${order.business_name}_${fullMatch[2]}.svg"`,
+    });
     res.end(svg);
     return;
   }
