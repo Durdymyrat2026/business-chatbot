@@ -116,6 +116,32 @@
   .chat-input input { flex: 1; padding: 10px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--text); outline: none; font-size: 14px; }
   .chat-input button { width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 17px; cursor: pointer; flex-shrink: 0; }
 
+  /* order modal */
+  .overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--card); border: 1px solid var(--line); border-radius: 18px; max-width: 460px; width: 100%; padding: 24px; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-size: 19px; margin-bottom: 16px; }
+  .modal label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+  .modal input, .modal select, .modal textarea {
+    width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text); font-size: 14px; outline: none; box-sizing: border-box;
+  }
+  .modal textarea { resize: vertical; min-height: 60px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card2); color: var(--text); font-size: 13px; cursor: pointer; }
+  .chip.sel { border-color: var(--accent); background: rgba(124,92,255,.15); }
+  .chip .sw { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  .modal .actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal .btn { flex: 1; text-align: center; }
+  .btn.disabled { opacity: .45; pointer-events: none; }
+  .result-box { text-align: center; }
+  .result-box img { max-width: 100%; border-radius: 12px; border: 1px solid var(--line); margin: 10px 0; }
+  .ok-icon { font-size: 40px; }
+  .link { color: var(--accent); text-decoration: none; font-size: 13px; display: inline-block; margin: 4px 8px; }
+  .step-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; }
+  .step-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+  .step-dots i.on { background: var(--accent); }
+
   @media (max-width: 760px) {
     .g4, .g3, .steps { grid-template-columns: repeat(2, 1fr); }
     .hero h1 { font-size: 32px; }
@@ -128,6 +154,7 @@
   <div class="nav">
     <div class="logo">BIRDE<span>.</span></div>
     <button class="btn" onclick="openChat()">Sorag ber</button>
+    <button class="btn ghost" onclick="openOrder()">Zakaz ber</button>
   </div>
 </header>
 
@@ -138,8 +165,7 @@
   <div class="actions">
     <button class="btn" onclick="openChat()">Hyzmatlary sorag et</button>
     <a class="btn ghost" href="#services">Hyzmatlary gör</a>
-  </div>
-</section>
+  </div></section>
 
 <section id="services">
   <div class="sec-head">
@@ -187,6 +213,7 @@
     <p style="margin:4px 0 2px"><a href="tel:+99362017373">+993 62 017 373</a> &nbsp;·&nbsp; <a href="tel:+99361847337">+993 61 847 337</a></p>
     <a href="mailto:dovrantaganov0@gmail.com">dovrantaganov0@gmail.com</a>
     <div style="margin-top:18px"><button class="btn" onclick="openChat()">Botdan sorag et</button></div>
+    <div style="margin-top:10px"><button class="btn ghost" onclick="openOrder()">Zakaz ber</button></div>
   </div>
 </section>
 
@@ -204,6 +231,15 @@
   <div class="chat-input">
     <input id="input" placeholder="Soragyňyzy ýazyň..." autocomplete="off">
     <button onclick="send()">➤</button>
+  </div>
+</div>
+
+<div class="overlay" id="orderOverlay">
+  <div class="modal" id="orderModal">
+    <div class="step-dots" id="dots">
+      <i class="on"></i><i></i><i></i><i></i>
+    </div>
+    <div id="orderStep"></div>
   </div>
 </div>
 
@@ -264,6 +300,110 @@
     }
   }
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+  /* ---- order wizard ---- */
+  const overlay = document.getElementById('orderOverlay');
+  const orderStep = document.getElementById('orderStep');
+  const dots = document.getElementById('dots').children;
+  const order = { business_name: '', industry: 'Telekeçilik', color: 'Fiolet', service: 'Logo + Wizitka', contact: '', notes: '' };
+  const stepCount = 4;
+  let step = 1;
+
+  const INDUSTRIES = ['Telekeçilik', 'Senagat', 'Logistika', 'Saglyk', 'Iýmit', 'Gurluşyk', 'Beýleki'];
+  const COLORS = [
+    { k: 'Fiolet', c: '#7c5cff' },
+    { k: 'Mawi', c: '#3b82f6' },
+    { k: 'Gök', c: '#06b6d4' },
+    { k: 'Gyzyl', c: '#ef4444' },
+    { k: 'Ýaşyl', c: '#10b981' },
+    { k: 'Gara-ak', c: '#1f2937' },
+  ];
+
+  function openOrder() { overlay.classList.add('open'); step = 1; renderStep(); }
+  function closeOrder() { overlay.classList.remove('open'); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOrder(); });
+
+  function setDots() {
+    for (let i = 0; i < stepCount; i++) dots[i].classList.toggle('on', i < step);
+  }
+  function renderStep() {
+    setDots();
+    const can = step > 1, back = step < stepCount;
+    let html = '';
+    if (step === 1) {
+      html = '<h3>Zakaz beriň</h3>' +
+        '<label>1. Firma ady *</label>' +
+        '<input id="oName" placeholder="Meselem: Aşgabat Motors" value="' + order.business_name + '">';
+    } else if (step === 2) {
+      html = '<h3>Ugruňyzy saýlaň</h3>' +
+        '<div class="chips">' + INDUSTRIES.map(i => '<button class="chip' + (order.industry === i ? ' sel' : '') + '" onclick="setIndustry(\'' + i + '\')">' + i + '</button>').join('') + '</div>' +
+        '<label>Reňk gowy görýäňiz</label>' +
+        '<div class="chips">' + COLORS.map(c => '<button class="chip' + (order.color === c.k ? ' sel' : '') + '" onclick="setColor(\'' + c.k + '\')"><span class="sw" style="background:' + c.c + '"></span>' + c.k + '</button>').join('') + '</div>';
+    } else if (step === 3) {
+      html = '<h3>Hyzmaty saýlaň</h3>' +
+        '<label>Hyzmat</label>' +
+        '<select id="oService">' + ['Logo + Wizitka', 'Diňe Logo', 'Diňe Wizitka', 'Doly brend paket'].map(s => '<option' + (order.service === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' +
+        '<label>Kontakt (telefon ýa-da email) *</label>' +
+        '<input id="oContact" placeholder="+993 6X XXX XX XX" value="' + order.contact + '">' +
+        '<label>Bellik (isleýän zatlaryňyz)</label>' +
+        '<textarea id="oNotes" placeholder="Meselem: gara reňk, rus dilinde...">' + order.notes + '</textarea>';
+    } else {
+      html = '<h3>Tassyklamak</h3>' +
+        '<p style="color:var(--muted);font-size:14px">Firma: <b>' + order.business_name + '</b><br>Ugur: ' + order.industry + '<br>Reňk: ' + order.color +
+        '<br>Hyzmat: ' + order.service + '<br>Kontakt: ' + order.contact + '</p>' +
+        (order.notes ? '<p style="color:var(--muted);font-size:13px">Bellik: ' + order.notes + '</p>' : '');
+    }
+    orderStep.innerHTML = html +
+      '<div class="actions">' +
+      (back ? '<button class="btn ghost" onclick="prevStep()">Yza</button>' : '') +
+      '<button class="btn' + (can ? '' : ' disabled') + '" onclick="nextStep()">' + (step === stepCount ? 'Ugrat' : 'Dowam') + '</button>' +
+      '</div>';
+  }
+
+  function nextStep() {
+    if (step === 1) {
+      order.business_name = document.getElementById('oName').value.trim();
+      if (!order.business_name) { alert('Firma adyňyzy ýazyň'); return; }
+    }
+    if (step === 3) {
+      order.service = document.getElementById('oService').value;
+      order.contact = document.getElementById('oContact').value.trim();
+      order.notes = document.getElementById('oNotes').value.trim();
+      if (!order.contact) { alert('Kontaktyňyzy ýazyň'); return; }
+    }
+    if (step === stepCount) { submitOrder(); return; }
+    step++; renderStep();
+  }
+  function prevStep() { step--; renderStep(); }
+  function setIndustry(i) { order.industry = i; renderStep(); }
+  function setColor(c) { order.color = c; renderStep(); }
+
+  async function submitOrder() {
+    orderStep.innerHTML = '<div class="result-box"><div class="ok-icon">⏳</div><p>Taýýarlanýar...</p></div>';
+    try {
+      const r = await fetch('/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Ýalňyşlyk');
+      orderStep.innerHTML =
+        '<div class="result-box"><div class="ok-icon">✅</div>' +
+        '<h3>Zakaz ugradyldy!</h3>' +
+        '<p style="color:var(--muted)">Zakaz #' + data.id + ' · Döwran aga tizara habarlaşar.</p>' +
+        '<p style="color:var(--muted);font-size:13px">Ilkinji teklip:</p>' +
+        '<img src="' + data.logo_url + '" alt="Logo teklibi">' +
+        '<img src="' + data.card_url + '" alt="Wizitka teklibi">' +
+        '<div><a class="link" href="' + data.logo_url + '" download>Logany indir</a>' +
+        '<a class="link" href="' + data.card_url + '" download>Wizitkany indir</a></div>' +
+        '<div class="actions"><button class="btn ghost" onclick="closeOrder()">Ýap</button></div></div>';
+    } catch (err) {
+      orderStep.innerHTML = '<div class="result-box"><p style="color:#ff5c8a">' + err.message + '</p>' +
+        '<div class="actions"><button class="btn ghost" onclick="renderStep()">Yza</button></div></div>';
+    }
+  }
+
   init();
 </script>
 </body>
